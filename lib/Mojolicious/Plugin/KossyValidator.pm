@@ -1,10 +1,12 @@
 use strict;
 use warnings;
 package Mojolicious::Plugin::KossyValidator;
+
+our $VERSION = '0.01';
+
 use Mojo::Base 'Mojolicious::Plugin';
 use Hash::MultiValue;
 
-our $VERSION = '0.01';
 
 our %VALIDATOR = (
     NOT_NULL => sub {
@@ -222,10 +224,10 @@ Mojolicious::Plugin::KossyValidator - 根据 Kossy 中的 Validator 移植过来
             },  
         ]); 
     
-        return {
+        $c->render( json => {
             result => 'false',
             messages => $result->errors
-        } if $result->has_error;
+        }) if $result->has_error;
 
         $result->has_error:Flag
         $result->messages:ArrayRef[`Str]
