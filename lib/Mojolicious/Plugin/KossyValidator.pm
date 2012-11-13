@@ -1,12 +1,14 @@
 use strict;
 use warnings;
 package Mojolicious::Plugin::KossyValidator;
+use Smart::Comments;
 
-our $VERSION = '0.01';
+our $VERSION = '0.02';
 
 use Mojo::Base 'Mojolicious::Plugin';
 use Hash::MultiValue;
 
+my $NUM_RE = qr/^[-+]?[0-9]+(:?\.[0-9]+)?$/;
 
 our %VALIDATOR = (
     NOT_NULL => sub {
@@ -25,12 +27,12 @@ our %VALIDATOR = (
         return;
     },
     INT => sub {
-        my ($req,$val) = @_;
+        my ($req, $val) = @_;
         return if not defined($val);
-        $val =~ /^\-?[\d]+$/;
+        return $val =~ /^\-?[\d]+$/;
     },
     UINT => sub {
-        my ($req,$val) = @_;
+        my ($req, $val) = @_;
         return if not defined($val);
         $val =~ /^\d+$/;  
     },
@@ -38,6 +40,47 @@ our %VALIDATOR = (
         my ($req,$val) = @_;
         return if not defined($val);
         $val =~ /^\d+$/ && $val > 0;
+    },
+    ALPHA=> sub {
+        my ($req,$val) = @_;
+        return if not defined($val);
+        $val =~ /^[A-Za-z]+$/ && $val > 0;
+    },
+    BETWEEN => sub {
+        my ($req, $value, @args) = @_;
+        my ($start, $end) = @args;
+        return  unless defined($start) && $start =~ /$NUM_RE/ && defined($end) && $end =~ /$NUM_RE/;
+        return  unless defined $value && $value =~ /$NUM_RE/;
+        return $value >= $start && $value <= $end ? 1 : 0;
+    },
+    LENGTH => sub {
+        my ($req, $value, $args) = @_;
+
+        return unless defined $value;
+
+        my $min;
+        my $max;
+        if(ref $args eq 'ARRAY') { ($min, $max) = @$args }
+        elsif (ref $args eq 'HASH') {
+            $min = $args->{min};
+            $max = $args->{max};
+        }
+        else { $min = $max = $args }
+
+        return 0 unless defined $min || defined $max;
+
+        my $length  = length $value;
+        my $is_valid;
+        if (defined $min && defined $max) {
+            $is_valid = $length >= $min && $length <= $max;
+        }
+        elsif (defined $min) {
+            $is_valid = $length >= $min;
+        }
+        elsif (defined $max) {
+            $is_valid = $length <= $max;
+        }
+        return $is_valid;
     },
     '@SELECTED_NUM' => sub {
         my ($req,$vals,@args) = @_;
@@ -52,12 +95,14 @@ our %VALIDATOR = (
     },
 );
 
+
+
 sub register {
     my ($self, $app, $conf) = @_;
-
-    $app->helper(
+    $app->helper( 
         validator => sub {
             my ($self, $rule) = @_;
+
             my @errors;
             my $valid = Hash::MultiValue->new;
             my $req = $self->req;
@@ -147,10 +192,11 @@ sub register {
             }
             
             KossyValidator::Result->new(\@errors,$valid);
-        }
+        } 
     );
-};
+}
 
+1;
 
 package KossyValidator::Result;
 
@@ -210,12 +256,15 @@ Mojolicious::Plugin::KossyValidator - 根据 Kossy 中的 Validator 移植过来
 
     use Mojolicious::Plugin::KossyValidator;
 
-    sub shiw {
+    sub show {
         my $c = shift
         my $result = $c->validator([
             'name' => {
                 rule => [
-                    ['NOT_NULL', '运营商名不能为空'],
+                    ['NOT_NULL', '不能为空'],
+                    #['ALPHA', '需要是数字'],
+                    #[['LENGTH',(10, 20)], '长度为 10-20 之间'],
+                    #[['BETWEEN',(1, 2)], '参数只能为数字'],
                 ],  
             },  
             'description' => {
@@ -266,6 +315,18 @@ unsigned int
 =item NATURAL
 
 natural number
+
+=item ALPHA
+
+English alphabet
+
+=item BETWEEN
+
+between two number
+
+=item LENGTH
+
+param length
 
 =item @SELECTED_NUM
 
