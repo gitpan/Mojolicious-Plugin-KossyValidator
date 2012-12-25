@@ -1,9 +1,8 @@
 use strict;
 use warnings;
 package Mojolicious::Plugin::KossyValidator;
-use Smart::Comments;
 
-our $VERSION = '0.02';
+our $VERSION = '0.03';
 
 use Mojo::Base 'Mojolicious::Plugin';
 use Hash::MultiValue;
