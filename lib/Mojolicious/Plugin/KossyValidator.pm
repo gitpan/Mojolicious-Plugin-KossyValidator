@@ -2,7 +2,7 @@ use strict;
 use warnings;
 package Mojolicious::Plugin::KossyValidator;
 
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 use Mojo::Base 'Mojolicious::Plugin';
 use Hash::MultiValue;
@@ -43,7 +43,7 @@ our %VALIDATOR = (
     ALPHA=> sub {
         my ($req,$val) = @_;
         return if not defined($val);
-        $val =~ /^[A-Za-z]+$/ && $val > 0;
+        $val =~ /^[A-Za-z]+$/;
     },
     BETWEEN => sub {
         my ($req, $value, @args) = @_;
@@ -247,6 +247,10 @@ sub to_hash {
 
 1;
 
+=pod
+
+=encoding utf-8
+
 =head1 NAME
 
 Mojolicious::Plugin::KossyValidator - 根据 Kossy 中的 Validator 移植过来的模块
@@ -288,6 +292,7 @@ Mojolicious::Plugin::KossyValidator - 根据 Kossy 中的 Validator 移植过来
     };
 
     dancer;
+
 
 =head1 DESCRIPTION
 
